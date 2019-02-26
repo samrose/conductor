@@ -2,14 +2,17 @@
 //! P2pNetwork instances take a json configuration string
 //! and at load-time instantiate the configured "backend"
 
-use holochain_net_connection::{
+use crate::connection::{
     net_connection::{NetHandler, NetSend, NetWorker, NetWorkerFactory},
     net_connection_thread::NetConnectionThread,
     protocol::Protocol,
     NetResult,
 };
+use std::{thread::sleep, time::Duration};
 
-use super::{ipc_net_worker::IpcNetWorker, memory_worker::InMemoryWorker, p2p_config::*};
+use crate::{
+    in_memory::memory_worker::InMemoryWorker, ipc_net_worker::IpcNetWorker, p2p_config::*,
+};
 
 /// Facade handling a p2p module responsable for the network connection
 /// Holds a NetConnectionThread and implements itself the NetSend Trait
@@ -49,6 +52,9 @@ impl P2pNetwork {
         };
         // Create NetConnectionThread with appropriate worker factory
         let connection = NetConnectionThread::new(handler, worker_factory, None)?;
+        if let P2pBackendKind::IPC = p2p_config.backend_kind {
+            sleep(Duration::from_millis(1000));
+        }
         // Done
         Ok(P2pNetwork { connection })
     }
